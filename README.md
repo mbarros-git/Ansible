@@ -111,3 +111,9 @@ ansible all -m fetch -a 'src=/tmp/test_modules.txt dest=/tmp/'
 #### Documentation ####
 
 ansible-doc <module>
+
+<<<< YAML >>>>
+
+Can optionally start with --- and end with ...
+
+python3 -c 'import yaml,pprint;pprint.pprint(yaml.load(open("test.yaml").read(), Loader=yaml.FullLoader))'
