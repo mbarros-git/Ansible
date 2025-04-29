@@ -1,138 +1,113 @@
-## Dive Into Ansible Course Lab
+SSH is used for authentication. No agent is required
 
-[![Follow](https://shields.io/twitter/follow/jamesspurin?label=Follow)](https://twitter.com/jamesspurin)
-[![GitHub Stars](https://shields.io/docker/pulls/spurin/diveintoansible?dummy=unused)](https://hub.docker.com/r/spurin/diveintoansible)
+Generate pair key in the main host
 
-✨ This repository provides a local lab configuration for DiveInto.com's 'Dive Into Ansible' course ✨
+ssh-keygen
 
-The related code repository is available at - https://github.com/spurin/diveintoansible
+We can copy to all hosts aimed for automation:
 
-The full video course relating to this lab is available on -
+for user in ansible root; 
+    do   
+        for os in ubuntu centos;   
+        do    
+             for instance in 1 2 3;     
+                do       
+                    sshpass -f password.txt ssh-copy-id -o StrictHostKeyChecking=no ${user}@${os}${instance};     
+                done;   
+        done; 
+done
 
-* [DiveInto](https://diveinto.com)
-* [Udemy](https://www.udemy.com/course/diveintoansible/?referralCode=28BBB7A1DCCD01BBA51F)
-* [O'Reilly](https://learning.oreilly.com/videos/dive-into-ansible/9781801076937)
-* [PacktPub](https://www.packtpub.com/product/dive-into-ansible-from-beginner-to-expert-in-ansible-video/9781801076937)
+Test connectivity
 
-🆘 If you experience any problems with the lab or the course, please reach out to me direct, James Spurin, or flag an issue in the repositories. I'd much rather know about an issue and in doing so, help yourself and others who encounter similar problems, Thanks!
+ansible -i,ubuntu1,ubuntu2,ubuntu3,centos1,centos2,centos3 all -m ping
 
-🚀 **New Update:** The diveintoansible-lab can now also be executed in the cloud using Google's Free Cloud Shell Tier. For this, a standard Google account is required. The lab setup process in Cloud Shell can be started with a single click and a setup tutorial will appear on the right hand side. Please see https://diveinto.com/p/playground
+git clone https://github.com/spurin/diveintoansible.git
 
-❗ **The steps that follow below are for a local running lab instance which is the recommend approach.**  Whilst the new Google Cloud Shell based lab is convenient and is great for spinning up an Ansible lab in a matter of minutes or for adhoc experimentation, a locally running lab has improved latency and you'll also benefit from data persistence (any custom playbooks you create will remain on your system between lab restarts) -
-  
-### Installation of Docker and Docker-Compose
+#Ansible configuration
 
-The lab environment, makes use of Docker with Docker Compose. If you're on **Windows, Mac or a Linux Desktop**, you can install the convenient **Docker Desktop** to make both Docker and Docker-Compose available.
+ansible --version
+    config file priority
+        4) /etc/ansible/ansible.cfg
+        3) ~/.ansible.cfg
+        2) ./ansible.cfg
+        1) ANSIBLE_CONFIG env variable
 
-**Non Desktop based Linux Environments**, will require a manual installation of Docker and Docker Compose. Be aware, installing docker-compose via apt or yum/dnf, you may result in the installation of an older version that is incompatible with the lab. It is recommended that you install the latest version. A standalone binary can be downloaded from the Github [releases](https://github.com/docker/compose/releases) page.
+#Ansible Inventories
 
-### Download and Preparation
+ansible all -m ping
 
-I recommend that the lab environment is downloaded to your respective home directory, i.e. -
+--> ansible file 
 
-* Mac     - /Users/james/diveintoansible-lab
-* Windows - C:\Users\james\diveintoansible-lab
-* Linux   - /home/james/diveintoansible-lab
+[defaults]
+inventory = host
 
-**Mac or Linux**
+--> host file
 
-You should be able to clone the repository accordingly from a terminal whilst in your home directory with the following command -
+[all]
+centos1
 
-```git clone https://github.com/spurin/diveintoansible-lab.git```
+ANSIBLE_HOST_KEY_CHECKING=False ansible all -m ping
 
-**Windows**
+All hosts are add to all '*' group by default
 
-If you don't have git installed, the lab can be downloaded using the following url - https://github.com/spurin/diveintoansible-lab/archive/master.zip
+[defaults]
+inventory = hosts
+host_key_checking = False ****
 
-After unzipping the archive, you must ensure that a single diveintoansible-lab folder is copied into your home directory (not multiple folders, i.e. **diveintoansible-lab-master**/diveintoansible-lab or **diveintoansible-lab/diveintoansible-lab**). See the next section on Validation.
+ansible <group> --list-hosts
 
-### Validation (IMPORTANT)
+-o can be used for oneline
 
-Please verify that all of the lab files, are in the expected locations after either cloning, or extracting the zip file, for your corresponding OS and User. They should be similar to the following and all files should exist (the config files are required to setup the ansible user upon startup) -
+ansible all -m ping -o
+ansible ~.*3 --list-hosts
 
-**Mac OS X**
+~ = regex
+. = any character
+* = any number of times
 
-```
-/Users/james/diveintoansible-lab/.env
-/Users/james/diveintoansible-lab/DiveIntoAnsible_Cover.png
-/Users/james/diveintoansible-lab/README.md
-/Users/james/diveintoansible-lab/docker-compose.yaml
-/Users/james/diveintoansible-lab/config/guest_name
-/Users/james/diveintoansible-lab/config/guest_passwd
-/Users/james/diveintoansible-lab/config/guest_shell
-/Users/james/diveintoansible-lab/config/root_passwd
-```
+ansible all -m command -a 'ls' -o
 
-**Windows**
+module -m command the default module wth ansible
 
-```
-C:\Users\James\diveintoansible-lab\.env
-C:\Users\James\diveintoansible-lab\DiveIntoAnsible_Cover.png
-C:\Users\James\diveintoansible-lab\README.md
-C:\Users\James\diveintoansible-lab\docker-compose.yaml
-C:\Users\James\diveintoansible-lab\config\guest_name
-C:\Users\James\diveintoansible-lab\config\guest_passwd
-C:\Users\James\diveintoansible-lab\config\guest_shell
-C:\Users\James\diveintoansible-lab\config\root_passwd
-```
+ansible_become ==> become superuser
+ansible_port=2222 ==> change port for SSH //// centos:2222 ansible_user=root
 
-**Linux**
+[control]
+ubuntu-c ansible_connection=local
 
-```
-/home/james/diveintoansible-lab/.env
-/home/james/diveintoansible-lab/DiveIntoAnsible_Cover.png
-/home/james/diveintoansible-lab/README.md
-/home/james/diveintoansible-lab/docker-compose.yaml
-/home/james/diveintoansible-lab/config/guest_name
-/home/james/diveintoansible-lab/config/guest_passwd
-/home/james/diveintoansible-lab/config/guest_shell
-/home/james/diveintoansible-lab/config/root_passwd
-```
+[centos]
+centos1 ansible_port=2222
+centos[2:3]
 
-### Running the lab
+[centos:vars]
+ansible_user=root
 
-If you're running a modern version of Docker as supplied via Docker Desktop, you should use compose as a subcommand, for example - `docker compose`.
+[ubuntu]
+ubuntu[1:3]
 
-If you're running Docker via Linux and have downloaded the docker-compose binary direct, please use `docker-compose`.
+[ubuntu:vars]
+ansible_become=true
+ansible_become_pass=password
 
-You will then be able to run the equivalent in your command prompt or terminal, directly from the diveintoansible-lab directory.
+[linux:children]
+centos
+ubuntu
 
-```
-docker compose up
-```
+#Setup module
+ansible centos -m setup | more
 
-If all goes well, it should start the lab environment. The lab is ready for use when you see text similar to the following -
+#File module
+ansible all -m file -a 'path=/tmp/test state=file mode=600'
+ls -altrh /tmp/test
+ansible all -m file -a 'path=/tmp/test state=touch'
 
-```
-Attaching to docker, centos1, ubuntu2, ubuntu3, centos2, centos3, ubuntu-c, ubuntu1, portal
-```
+#Copy module
+ansible all -m copy -a 'src=/tmp/x dest=/tmp/x'
+ansible all -m copy -a 'remote_src=yes src=/tmp/x dest=/tmp/y'
 
-Keep this terminal open and running whilst using the course. In your browser, then browse to http://localhost:1000 and you should get the lab interface. If you find that you cannot login to the Ansible control host (ubuntu-c) as ansible and the password of password, then there is a fault with your configuration. If this is the case, it is important to perform the following actions before troubleshooting or changing your configuration. Press CTRL-C, then run the following -
+#Fetch module
+ansible all -m fetch -a 'src=/tmp/test_modules.txt dest=/tmp/'
 
-```
-docker compose rm
-```
+#### Documentation ####
 
-### Lab commands
-
-To refresh the images with the latest course images -
-
-```
-docker compose pull
-```
-
-To remove the lab
-
-```
-docker compose rm
-```
-
-## Container Sources for the Lab Images
-
-The Dockerfiles used for the creation of these lab images are available from the following -
-
-* [spurin/diveintoansible-images](https://github.com/spurin/diveintoansible-images)
-
----
-
-![DiveIntoAnsible Cover](DiveIntoAnsible_Cover.png?raw=true "Dive Into Ansible")
+ansible-doc <module>
